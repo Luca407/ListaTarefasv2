@@ -1,0 +1,22 @@
+create database teste;
+
+use teste;
+
+create table if not exists Usuario
+(
+	Id_usuario int auto_increment not null primary key,
+    Nome varchar (100) not null,
+    Usuario varchar (50) not null UNIQUE,
+    Senha varchar (50) not null
+);
+
+create table if not exists Tarefas
+(
+	Id_tarefa int auto_increment not null primary key,
+    Nome varchar (100) not null,
+    Descricao text not null,
+    Situacao varchar (50) not null,
+    DataCriacao datetime not null
+);
+
+
