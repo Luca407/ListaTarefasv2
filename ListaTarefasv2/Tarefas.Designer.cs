@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             groupBox1 = new GroupBox();
+            btnAtualizar = new Button();
             txtNomeTarefa = new TextBox();
             cbStatus = new ComboBox();
             txtDescricao = new TextBox();
@@ -37,7 +38,6 @@
             label1 = new Label();
             btnCadastrar = new Button();
             dgvTarefas = new DataGridView();
-            btnAtualizar = new Button();
             groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvTarefas).BeginInit();
             SuspendLayout();
@@ -57,6 +57,16 @@
             groupBox1.Size = new Size(233, 358);
             groupBox1.TabIndex = 2;
             groupBox1.TabStop = false;
+            // 
+            // btnAtualizar
+            // 
+            btnAtualizar.Location = new Point(143, 278);
+            btnAtualizar.Name = "btnAtualizar";
+            btnAtualizar.Size = new Size(75, 23);
+            btnAtualizar.TabIndex = 11;
+            btnAtualizar.Text = "Editar";
+            btnAtualizar.UseVisualStyleBackColor = true;
+            btnAtualizar.Click += btnAtualizar_Click;
             // 
             // txtNomeTarefa
             // 
@@ -126,17 +136,7 @@
             dgvTarefas.Name = "dgvTarefas";
             dgvTarefas.Size = new Size(433, 378);
             dgvTarefas.TabIndex = 3;
-            dgvTarefas.CellDoubleClick += dgvTarefas_CellDoubleClick;
-            // 
-            // btnAtualizar
-            // 
-            btnAtualizar.Location = new Point(143, 278);
-            btnAtualizar.Name = "btnAtualizar";
-            btnAtualizar.Size = new Size(75, 23);
-            btnAtualizar.TabIndex = 11;
-            btnAtualizar.Text = "Editar";
-            btnAtualizar.UseVisualStyleBackColor = true;
-            btnAtualizar.Click += btnAtualizar_Click;
+            dgvTarefas.CellContentClick += dgvTarefas_CellContentClick_1;
             // 
             // Tarefas
             // 

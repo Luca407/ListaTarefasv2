@@ -1,9 +1,6 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Windows.Forms; // Adicionado para MessageBox
 
 namespace ListaTarefasv2
 {
@@ -12,84 +9,8 @@ namespace ListaTarefasv2
         public int Id_usuario { get; set; }
         public string Nome { get; set; }
         public string Usuario { get; set; }
-        public string Senha { get; set; }
-        
+        public string Senha { get; set; } // Esta propriedade conterá a senha em texto puro ANTES de ser criptografada.
 
-
-        private bool ExisteCampoDuplicado(string campo, string valor, MySqlConnection conexao)
-        {
-            string query = $"SELECT COUNT(*) FROM Usuario WHERE {campo} = @valor";
-            using (MySqlCommand cmd = new MySqlCommand(query, conexao))
-            {
-                cmd.Parameters.AddWithValue("@valor", valor);
-                return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
-            }
-        }
-
-        public bool CadastroUser()
-        {
-            try
-            {
-                using (MySqlConnection conexaoBanco = new ConexaoBD().Conectar())
-                {
-                    string inserir = "insert into Usuario (Nome, Usuario, Senha) values (@Nome, @Usuario, @Senha)";
-
-                    MySqlCommand comando = new MySqlCommand(inserir, conexaoBanco);
-
-                    comando.Parameters.AddWithValue("@Nome", Nome);
-                    comando.Parameters.AddWithValue("@Usuario", Usuario);
-                    comando.Parameters.AddWithValue("@Senha", Senha);
-
-                    int resultado = comando.ExecuteNonQuery();
-                    if (resultado > 0)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Não foi possível cadastrar usuário -> " + ex.Message, "Erro - Verificar Login", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                throw;
-            }
-        }
-        public bool VerificarLogin()
-        {
-            try
-            {
-                using (MySqlConnection conexaoBanco = new ConexaoBD().Conectar())
-                {
-
-                    //Consultando se o usuário e senha informados existem no banco de dados
-                    string consultaUsuarios = "SELECT COUNT(*) FROM Usuario WHERE Usuario = @Usuario AND Senha = @Senha";
-                    MySqlCommand comando = new MySqlCommand(consultaUsuarios, conexaoBanco);
-
-                    comando.Parameters.AddWithValue("@Nome", Nome);
-                    comando.Parameters.AddWithValue("@Usuario", Usuario);
-                    comando.Parameters.AddWithValue("@Senha", Senha);
-
-                    int resultado = Convert.ToInt32(comando.ExecuteScalar());
-
-                    if (resultado > 0)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Não foi possível verificar login -> " + ex.Message, "Erro - Verificar Login", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                throw;
-            }
-        }
         public string ValidarCadastro()
         {
             try
@@ -100,45 +21,122 @@ namespace ListaTarefasv2
                     MySqlCommand comando = new MySqlCommand(consulta, conexaoBanco);
                     comando.Parameters.AddWithValue("@Usuario", Usuario);
 
-                    using (MySqlDataReader leitor = comando.ExecuteReader())
-                    {
-                        if (leitor.Read())
-                        {
-                            int count = Convert.ToInt32(leitor[0]);
-                            if (count > 0)
-                            {
-                                leitor.Close();
+                    int count = Convert.ToInt32(comando.ExecuteScalar()); // Usa ExecuteScalar para COUNT(*)
 
-                                if (ExisteCampoDuplicado("Usuario", Usuario, conexaoBanco))
-                                    return "Usuário já está cadastrado.";
-                            }
-                        }
+                    if (count > 0)
+                    {
+                        return "Usuário já está cadastrado.";
                     }
                 }
-                return null;
+                return null; // Retorna null se não houver duplicidade
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Não foi possível validar cadastro -> " + ex.Message, "Erro - Validar Cadastro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Não foi possível validar cadastro: " + ex.Message, "Erro - Validar Cadastro", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 throw;
             }
         }
 
-        public string BuscarNome()
+        public bool CadastroUser()
         {
             try
             {
                 using (MySqlConnection conexaoBanco = new ConexaoBD().Conectar())
                 {
-                    string buscarNomeUsuario = "SELECT Usuario FROM Usuario WHERE Usuario = @Usuario";
+                    // Criptografa a senha em texto puro antes de armazená-la no banco de dados
+                    string senhaCriptografada = Criptografia.GerarHashSha256(this.Senha);
 
-                    MySqlCommand comando = new MySqlCommand(buscarNomeUsuario, conexaoBanco);
+                    // ATENÇÃO: Nome do parâmetro alterado para @CriptoSenha para evitar confusão com a propriedade Senha
+                    string inserir = "INSERT INTO Usuario (Nome, Usuario, Senha) VALUES (@Nome, @Usuario, @CriptoSenha)";
+
+                    MySqlCommand comando = new MySqlCommand(inserir, conexaoBanco);
+
+                    comando.Parameters.AddWithValue("@Nome", Nome);
                     comando.Parameters.AddWithValue("@Usuario", Usuario);
+                    comando.Parameters.AddWithValue("@CriptoSenha", senhaCriptografada); // Usa a senha criptografada
 
+                    int resultado = comando.ExecuteNonQuery();
+                    return resultado > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Não foi possível cadastrar usuário: " + ex.Message, "Erro - Cadastro de Usuário", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+        public bool VerificarLogin()
+        {
+            try
+            {
+                using (MySqlConnection conexaoBanco = new ConexaoBD().Conectar())
+                {
+                    // Criptografa a senha digitada pelo usuário para comparar com a que já está criptografada no banco
+                    string senhaCriptografada = Criptografia.GerarHashSha256(this.Senha);
+
+                    // ATENÇÃO: Nome do parâmetro alterado para @CriptoSenha
+                    string consultaUsuarios = "SELECT COUNT(*) FROM Usuario WHERE Usuario = @Usuario AND Senha = @CriptoSenha";
+                    MySqlCommand comando = new MySqlCommand(consultaUsuarios, conexaoBanco);
+
+                    // Não precisamos do @Nome para verificar login
+                    comando.Parameters.AddWithValue("@Usuario", Usuario);
+                    comando.Parameters.AddWithValue("@CriptoSenha", senhaCriptografada); // Compara com a senha criptografada
+
+                    int resultado = Convert.ToInt32(comando.ExecuteScalar());
+
+                    return resultado > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Não foi possível verificar login: " + ex.Message, "Erro - Verificar Login", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+        public int BuscarIdUsuarioPorUsuario(string nomeUsuario)
+        {
+            try
+            {
+                using (MySqlConnection conexaoBanco = new ConexaoBD().Conectar())
+                {
+                    string consultaId = "SELECT Id_usuario FROM Usuario WHERE Usuario = @Usuario";
+                    MySqlCommand comando = new MySqlCommand(consultaId, conexaoBanco);
+                    comando.Parameters.AddWithValue("@Usuario", nomeUsuario);
 
                     object resultado = comando.ExecuteScalar();
 
-                    if (resultado != null)
+                    if (resultado != null && resultado != DBNull.Value)
+                    {
+                        return Convert.ToInt32(resultado);
+                    }
+                    else
+                    {
+                        return 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao buscar ID do usuário: " + ex.Message, "Erro - Buscar ID Usuário", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return 0;
+            }
+        }
+
+        public string BuscarNome() // Este método agora busca o 'Nome' de exibição do usuário
+        {
+            try
+            {
+                using (MySqlConnection conexaoBanco = new ConexaoBD().Conectar())
+                {
+                    string buscarNomeUsuario = "SELECT Nome FROM Usuario WHERE Usuario = @Usuario";
+                    MySqlCommand comando = new MySqlCommand(buscarNomeUsuario, conexaoBanco);
+                    comando.Parameters.AddWithValue("@Usuario", Usuario);
+
+                    object resultado = comando.ExecuteScalar();
+
+                    if (resultado != null && resultado != DBNull.Value)
                     {
                         return resultado.ToString();
                     }
@@ -150,7 +148,7 @@ namespace ListaTarefasv2
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Não foi possível buscar nome -> " + ex.Message, "Erro - Buscar Nome", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Não foi possível buscar nome: " + ex.Message, "Erro - Buscar Nome", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 throw;
             }
         }

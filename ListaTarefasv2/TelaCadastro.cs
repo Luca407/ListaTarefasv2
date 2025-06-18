@@ -1,11 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace ListaTarefasv2
@@ -33,12 +26,13 @@ namespace ListaTarefasv2
         {
             try
             {
-                if (!txtNome.Text.Equals("") && !txtSenha.Text.Equals("") && !txtUsuario.Text.Equals(""))
+                // Usando String.IsNullOrEmpty para validação mais robusta
+                if (!string.IsNullOrEmpty(txtNome.Text) && !string.IsNullOrEmpty(txtSenha.Text) && !string.IsNullOrEmpty(txtUsuario.Text))
                 {
                     usuario novoUsuario = new usuario();
                     novoUsuario.Nome = txtNome.Text;
                     novoUsuario.Usuario = txtUsuario.Text;
-                    novoUsuario.Senha = txtSenha.Text;
+                    novoUsuario.Senha = txtSenha.Text; // Senha em texto puro, será criptografada na classe usuario
 
                     string validacao = novoUsuario.ValidarCadastro();
 
@@ -50,14 +44,14 @@ namespace ListaTarefasv2
 
                     if (novoUsuario.CadastroUser())
                     {
-                        MessageBox.Show("Cadastro realizado com sucesso");
+                        MessageBox.Show("Cadastro realizado com sucesso!");
                         Login telaLogin = new Login();
                         telaLogin.Show();
                         this.Hide();
                     }
                     else
                     {
-                        MessageBox.Show("Não foi possível cadastrar usuário");
+                        MessageBox.Show("Não foi possível cadastrar usuário.");
                     }
                 }
                 else
@@ -68,7 +62,7 @@ namespace ListaTarefasv2
             catch (Exception ex)
             {
                 MessageBox.Show("Erro ao cadastrar o usuário: " + ex.Message);
-                throw;
+                // Não é necessário 'throw' aqui.
             }
         }
     }

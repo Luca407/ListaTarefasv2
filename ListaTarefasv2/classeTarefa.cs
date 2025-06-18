@@ -1,113 +1,118 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace ListaTarefasv2
 {
-    internal class classeTarefa
+    public class classeTarefa
     {
         public int Id { get; set; }
-        public string Nome { get; set; } = string.Empty;
-        public string Descricao { get; set; } = string.Empty;
-        public string Situacao { get; set; } = string.Empty;
+        public string Nome { get; set; }
+        public string Descricao { get; set; }
+        public string Situacao { get; set; }
         public DateTime DataCriacao { get; set; }
-
-        public static bool ExcluirTarefa(int id)
-        {
-            try
-            {
-                using MySqlConnection conexao = new ConexaoBD().Conectar();
-                string query = "DELETE FROM Tarefas WHERE Id_tarefa = @Id_tarefa";
-                MySqlCommand comando = new MySqlCommand(query, conexao);
-                comando.Parameters.AddWithValue("@Id_tarefa", id);
-                return comando.ExecuteNonQuery() > 0;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
+        public int Id_usuario { get; set; } // Chave estrangeira para o usuário proprietário da tarefa
 
         public bool InserirTarefa()
         {
             try
             {
-                using MySqlConnection conexaoBanco = new ConexaoBD().Conectar();
+                using (MySqlConnection conexaoBanco = new ConexaoBD().Conectar())
                 {
-                    string inserir = "INSERT INTO Tarefas (Nome, Descricao, DataCriacao, Situacao) VALUES (@Nome, @Descricao, @DataCriacao, @Situacao)";
+                    string inserir = "INSERT INTO Tarefa (Nome, Descricao, Situacao, DataCriacao, Id_usuario) VALUES (@Nome, @Descricao, @Situacao, NOW(), @Id_usuario)";
                     MySqlCommand comando = new MySqlCommand(inserir, conexaoBanco);
                     comando.Parameters.AddWithValue("@Nome", Nome);
                     comando.Parameters.AddWithValue("@Descricao", Descricao);
-                    comando.Parameters.AddWithValue("@DataCriacao", DateTime.Now);
                     comando.Parameters.AddWithValue("@Situacao", Situacao);
-                    int resultado = comando.ExecuteNonQuery();
-                    return resultado > 0;
-                }
-            }
-            catch 
-            {
-
-                return false;
-            }
-        }
-        public static List<classeTarefa> ListarTarefas()
-        {
-            List<classeTarefa> tarefas = new List<classeTarefa>();
-
-            try
-            {
-                using MySqlConnection conexaoBanco = new ConexaoBD().Conectar();
-                {
-                    string query = "SELECT * FROM Tarefas";
-                    MySqlCommand comando = new MySqlCommand(query, conexaoBanco);
-                    using MySqlDataReader reader = comando.ExecuteReader();
-                    while (reader.Read())
-                    {
-                        tarefas.Add(new classeTarefa
-                        {
-                            Id = reader.GetInt32("Id_tarefa"),
-                            Nome = reader.GetString("Nome"),
-                            Descricao = reader.GetString("Descricao"),
-                            DataCriacao = reader.GetDateTime("DataCriacao"),
-                            Situacao = reader.GetString("Situacao")
-                        });
-                    }
+                    comando.Parameters.AddWithValue("@Id_usuario", Id_usuario);
+                    return comando.ExecuteNonQuery() > 0;
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Erro ao listar tarefas: " + ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                throw;
+                MessageBox.Show("Erro ao inserir tarefa: " + ex.Message);
+                return false;
             }
-
-            return tarefas;
         }
 
         public bool AtualizarTarefa()
         {
             try
             {
-                using MySqlConnection conexaoBanco = new ConexaoBD().Conectar();
-                string query = "UPDATE Tarefas SET Nome = @Nome, Descricao = @Descricao, Situacao = @Situacao WHERE Id_tarefa = @Id_tarefa";
-                MySqlCommand comando = new MySqlCommand(query, conexaoBanco);
-                comando.Parameters.AddWithValue("@Nome", Nome);
-                comando.Parameters.AddWithValue("@Descricao", Descricao);
-                comando.Parameters.AddWithValue("@Situacao", Situacao);
-                comando.Parameters.AddWithValue("@Id_tarefa", Id);
-                int resultado = comando.ExecuteNonQuery();
-                return resultado > 0;
+                using (MySqlConnection conexaoBanco = new ConexaoBD().Conectar())
+                {
+                    string atualizar = "UPDATE Tarefa SET Nome = @Nome, Descricao = @Descricao, Situacao = @Situacao WHERE Id = @Id AND Id_usuario = @Id_usuario";
+                    MySqlCommand comando = new MySqlCommand(atualizar, conexaoBanco);
+                    comando.Parameters.AddWithValue("@Id", Id);
+                    comando.Parameters.AddWithValue("@Nome", Nome);
+                    comando.Parameters.AddWithValue("@Descricao", Descricao);
+                    comando.Parameters.AddWithValue("@Situacao", Situacao);
+                    comando.Parameters.AddWithValue("@Id_usuario", Id_usuario);
+                    return comando.ExecuteNonQuery() > 0;
+                }
             }
-            catch (Exception ex)    
+            catch (Exception ex)
             {
-                MessageBox.Show("Erro ao atualizar: " + ex.Message);
+                MessageBox.Show("Erro ao atualizar tarefa: " + ex.Message);
                 return false;
             }
         }
 
+        public static bool ExcluirTarefa(int idTarefa, int idUsuario) // Requer o ID do usuário para exclusão segura
+        {
+            try
+            {
+                using (MySqlConnection conexaoBanco = new ConexaoBD().Conectar())
+                {
+                    string excluir = "DELETE FROM Tarefa WHERE Id = @Id AND Id_usuario = @Id_usuario";
+                    MySqlCommand comando = new MySqlCommand(excluir, conexaoBanco);
+                    comando.Parameters.AddWithValue("@Id", idTarefa);
+                    comando.Parameters.AddWithValue("@Id_usuario", idUsuario);
+                    return comando.ExecuteNonQuery() > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao excluir tarefa: " + ex.Message);
+                return false;
+            }
+        }
 
+        public static List<classeTarefa> ListarTarefas(int idUsuario) // Requer o ID do usuário para listar suas tarefas
+        {
+            List<classeTarefa> lista = new List<classeTarefa>();
+            try
+            {
+                using (MySqlConnection conexaoBanco = new ConexaoBD().Conectar())
+                {
+                    string selecionar = "SELECT Id, Nome, Descricao, Situacao, DataCriacao, Id_usuario FROM Tarefa WHERE Id_usuario = @Id_usuario ORDER BY DataCriacao DESC";
+                    MySqlCommand comando = new MySqlCommand(selecionar, conexaoBanco);
+                    comando.Parameters.AddWithValue("@Id_usuario", idUsuario); // Filtra por usuário logado
+
+                    using (MySqlDataReader leitor = comando.ExecuteReader())
+                    {
+                        while (leitor.Read())
+                        {
+                            classeTarefa tarefa = new classeTarefa
+                            {
+                                Id = Convert.ToInt32(leitor["Id"]),
+                                Nome = leitor["Nome"].ToString(),
+                                Descricao = leitor["Descricao"].ToString(),
+                                Situacao = leitor["Situacao"].ToString(),
+                                DataCriacao = Convert.ToDateTime(leitor["DataCriacao"]),
+                                Id_usuario = Convert.ToInt32(leitor["Id_usuario"])
+                            };
+                            lista.Add(tarefa);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao listar tarefas: " + ex.Message);
+            }
+            return lista;
+        }
     }
 }

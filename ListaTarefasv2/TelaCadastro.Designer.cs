@@ -96,12 +96,12 @@
             // llblTelaCadastro
             // 
             llblTelaCadastro.AutoSize = true;
-            llblTelaCadastro.Location = new Point(61, 242);
+            llblTelaCadastro.Location = new Point(64, 242);
             llblTelaCadastro.Name = "llblTelaCadastro";
-            llblTelaCadastro.Size = new Size(69, 15);
+            llblTelaCadastro.Size = new Size(60, 15);
             llblTelaCadastro.TabIndex = 5;
             llblTelaCadastro.TabStop = true;
-            llblTelaCadastro.Text = "Cadastre-se";
+            llblTelaCadastro.Text = "Tela Login";
             llblTelaCadastro.LinkClicked += llblTelaCadastro_LinkClicked;
             // 
             // label2

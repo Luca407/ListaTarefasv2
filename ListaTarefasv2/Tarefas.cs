@@ -1,12 +1,5 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace ListaTarefasv2
@@ -14,26 +7,38 @@ namespace ListaTarefasv2
     public partial class Tarefas : Form
     {
         private int tarefaEmEdicaoId = 0;
+        private int usuarioLogadoId; // Variável para armazenar o ID do usuário logado
 
         public Tarefas()
         {
             InitializeComponent();
+            // Pega o ID do usuário logado da classe Login
+            usuarioLogadoId = Login.UsuarioLogadoId;
             CarregarTarefas();
         }
 
         private void btnCadastrar_Click(object sender, EventArgs e)
         {
+            // Validação simples para garantir que o nome da tarefa não esteja vazio
+            if (string.IsNullOrWhiteSpace(txtNomeTarefa.Text))
+            {
+                MessageBox.Show("O nome da tarefa não pode ser vazio.", "Validação", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             classeTarefa tarefa = new classeTarefa
             {
                 Nome = txtNomeTarefa.Text,
                 Descricao = txtDescricao.Text,
                 Situacao = cbStatus.SelectedItem?.ToString() ?? "Pendente",
+                Id_usuario = usuarioLogadoId // Associa a tarefa ao usuário logado
             };
 
             if (tarefa.InserirTarefa())
             {
                 MessageBox.Show("Tarefa inserida com sucesso!");
-                CarregarTarefas();
+                LimparCampos(); // Limpa os campos após o cadastro
+                CarregarTarefas(); // Recarrega o DataGrid
             }
             else
             {
@@ -43,7 +48,8 @@ namespace ListaTarefasv2
 
         private void CarregarTarefas()
         {
-            List<classeTarefa> lista = classeTarefa.ListarTarefas();
+            // Carrega tarefas APENAS para o usuário logado
+            List<classeTarefa> lista = classeTarefa.ListarTarefas(usuarioLogadoId);
             dgvTarefas.Columns.Clear();
             dgvTarefas.DataSource = null;
             dgvTarefas.AutoGenerateColumns = false;
@@ -51,15 +57,13 @@ namespace ListaTarefasv2
             dgvTarefas.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvTarefas.AllowUserToAddRows = false;
 
-            
             dgvTarefas.Columns.Add(new DataGridViewTextBoxColumn
             {
                 DataPropertyName = "Id",
                 Name = "Id",
-                Visible = false 
+                Visible = false // Mantém o ID oculto
             });
 
-            
             dgvTarefas.Columns.Add(new DataGridViewTextBoxColumn
             {
                 DataPropertyName = "Nome",
@@ -88,7 +92,7 @@ namespace ListaTarefasv2
                 Name = "DataCriacao"
             });
 
-            // Botões no final
+            // Botões de ação
             dgvTarefas.Columns.Add(new DataGridViewButtonColumn
             {
                 Name = "Editar",
@@ -106,66 +110,44 @@ namespace ListaTarefasv2
             });
 
             dgvTarefas.DataSource = lista;
+            LimparCampos(); // Limpa os campos após carregar as tarefas
         }
 
-
-        private void dgvTarefas_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        private void Tarefas_FormClosed(object sender, FormClosedEventArgs e)   
         {
-            if (e.RowIndex >= 0)
-            {
-                var linha = dgvTarefas.Rows[e.RowIndex];
-                int id = Convert.ToInt32(linha.Cells["Id"].Value); //tem um erro aqui, verifique
-
-                if (dgvTarefas.Columns[e.ColumnIndex].Name == "Excluir")
-                {
-                    DialogResult confirm = MessageBox.Show("Deseja excluir esta tarefa?", "Confirmar", MessageBoxButtons.YesNo);
-                    if (confirm == DialogResult.Yes)
-                    {
-                        if (classeTarefa.ExcluirTarefa(id))
-                        {
-                            MessageBox.Show("Tarefa excluída com sucesso.");
-                            CarregarTarefas();
-                        }
-                        else
-                        {
-                            MessageBox.Show("Erro ao excluir.");
-                        }
-                    }
-                }
-
-                if (dgvTarefas.Columns[e.ColumnIndex].Name == "Editar")
-                {
-                    tarefaEmEdicaoId = id;
-                    txtNomeTarefa.Text = linha.Cells["Nome"].Value?.ToString();
-                    txtDescricao.Text = linha.Cells["Descricao"].Value?.ToString();
-                    cbStatus.SelectedItem = linha.Cells["Situacao"].Value?.ToString();
-                }
-            }
-        }
-
-        private void Tarefas_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            Application.Exit();
+            Application.Exit(); // Garante que o aplicativo seja encerrado ao fechar esta tela
         }
 
         private void btnAtualizar_Click(object sender, EventArgs e)
         {
-            if (tarefaEmEdicaoId == 0) return;
+            if (tarefaEmEdicaoId == 0) // Verifica se alguma tarefa foi selecionada para edição
+            {
+                MessageBox.Show("Selecione uma tarefa para editar primeiro.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // Validação simples para garantir que o nome da tarefa não esteja vazio
+            if (string.IsNullOrWhiteSpace(txtNomeTarefa.Text))
+            {
+                MessageBox.Show("O nome da tarefa não pode ser vazio.", "Validação", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
             classeTarefa tarefa = new classeTarefa
             {
-                Id = tarefaEmEdicaoId,
+                Id = tarefaEmEdicaoId, // ID da tarefa que está sendo atualizada
                 Nome = txtNomeTarefa.Text,
                 Descricao = txtDescricao.Text,
-                Situacao = cbStatus.SelectedItem?.ToString() ?? "Pendente"
+                Situacao = cbStatus.SelectedItem?.ToString() ?? "Pendente",
+                Id_usuario = usuarioLogadoId // Garante que a atualização é para a tarefa do usuário logado
             };
 
             if (tarefa.AtualizarTarefa())
             {
                 MessageBox.Show("Tarefa atualizada com sucesso!");
-                tarefaEmEdicaoId = 0;
-                LimparCampos();
-                CarregarTarefas();
+                tarefaEmEdicaoId = 0; // Reseta o ID da tarefa em edição
+                CarregarTarefas(); // Recarrega o DataGrid
+                LimparCampos(); // Limpa os campos após a atualização
             }
             else
             {
@@ -177,7 +159,47 @@ namespace ListaTarefasv2
         {
             txtNomeTarefa.Clear();
             txtDescricao.Clear();
-            cbStatus.SelectedIndex = -1;
+            cbStatus.SelectedIndex = -1; // Limpa a seleção do ComboBox
+        }
+
+        private void dgvTarefas_CellContentClick_1(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0)
+            {
+                var linha = dgvTarefas.Rows[e.RowIndex];
+
+                int idTarefaSelecionada = Convert.ToInt32(linha.Cells["Id"].Value);
+
+
+                if (dgvTarefas.Columns[e.ColumnIndex].Name == "Excluir")
+                {
+                    DialogResult confirm = MessageBox.Show("Deseja realmente excluir esta tarefa?", "Confirmar Exclusão", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    if (confirm == DialogResult.Yes)
+                    {
+
+                        if (classeTarefa.ExcluirTarefa(idTarefaSelecionada, usuarioLogadoId))
+                        {
+                            MessageBox.Show("Tarefa excluída com sucesso.");
+                            CarregarTarefas();
+                             
+                        }
+                        else
+                        {
+                            MessageBox.Show("Erro ao excluir tarefa.");
+                        }
+                    }
+                }
+
+                // Lógica para o botão "Editar"
+                if (dgvTarefas.Columns[e.ColumnIndex].Name == "Editar")
+                {
+                    tarefaEmEdicaoId = idTarefaSelecionada; // Armazena o ID da tarefa que será editada
+                    txtNomeTarefa.Text = linha.Cells["Nome"].Value?.ToString();
+                    txtDescricao.Text = linha.Cells["Descricao"].Value?.ToString();
+                    cbStatus.SelectedItem = linha.Cells["Situacao"].Value?.ToString();
+                     
+                }
+            }
         }
     }
 }

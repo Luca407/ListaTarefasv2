@@ -1,7 +1,14 @@
+using System;
+using System.Windows.Forms;
+using System.ComponentModel;
+
 namespace ListaTarefasv2
 {
     public partial class Login : Form
     {
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public static int UsuarioLogadoId { get; private set; } 
+
         public Login()
         {
             InitializeComponent();
@@ -18,22 +25,26 @@ namespace ListaTarefasv2
         {
             try
             {
-                if (!txtSenha.Text.Equals("") && !txtUsuario.Text.Equals(""))
+                // Usando String.IsNullOrEmpty para validação mais robusta
+                if (!string.IsNullOrEmpty(txtUsuario.Text) && !string.IsNullOrEmpty(txtSenha.Text))
                 {
                     usuario novoUsuario = new usuario();
                     novoUsuario.Usuario = txtUsuario.Text;
-                    novoUsuario.Senha = txtSenha.Text;
+                    novoUsuario.Senha = txtSenha.Text; // Senha em texto puro, será criptografada na classe usuario
+
                     if (novoUsuario.VerificarLogin())
                     {
-                        string nomeLogado = novoUsuario.BuscarNome();
+                        // Se o login for bem-sucedido, busca e armazena o ID do usuário
+                        UsuarioLogadoId = novoUsuario.BuscarIdUsuarioPorUsuario(txtUsuario.Text);
+
+                        // Agora que temos o ID, podemos abrir a tela de tarefas
                         Tarefas telaTarefas = new Tarefas();
                         telaTarefas.Show();
                         this.Hide();
-
                     }
                     else
                     {
-                        MessageBox.Show("Usuário ou senha inválidos");
+                        MessageBox.Show("Usuário ou senha inválidos.");
                         txtSenha.Clear();
                         txtUsuario.Clear();
                     }
@@ -45,8 +56,8 @@ namespace ListaTarefasv2
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Não foi possivel acessar o sistema! " + ex.Message, "Erro - Método btnEntrar_Click", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                throw;
+                MessageBox.Show("Não foi possível acessar o sistema! Erro: " + ex.Message, "Erro - Login", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // Não é necessário 'throw' aqui, o MessageBox já informa o usuário.
             }
         }
 
@@ -54,7 +65,5 @@ namespace ListaTarefasv2
         {
             Application.Exit();
         }
-
-        
     }
 }
