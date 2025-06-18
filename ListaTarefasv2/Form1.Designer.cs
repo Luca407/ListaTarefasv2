@@ -108,6 +108,7 @@
             txtSenha.Name = "txtSenha";
             txtSenha.Size = new Size(100, 23);
             txtSenha.TabIndex = 2;
+            txtSenha.UseSystemPasswordChar = true;
             // 
             // txtUsuario
             // 
@@ -126,7 +127,6 @@
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Form1";
             FormClosed += Login_FormClosed;
-            
             groupBox1.ResumeLayout(false);
             groupBox1.PerformLayout();
             ResumeLayout(false);

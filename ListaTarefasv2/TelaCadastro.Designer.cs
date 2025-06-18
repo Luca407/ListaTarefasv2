@@ -98,7 +98,7 @@
             llblTelaCadastro.AutoSize = true;
             llblTelaCadastro.Location = new Point(64, 242);
             llblTelaCadastro.Name = "llblTelaCadastro";
-            llblTelaCadastro.Size = new Size(60, 15);
+            llblTelaCadastro.Size = new Size(61, 15);
             llblTelaCadastro.TabIndex = 5;
             llblTelaCadastro.TabStop = true;
             llblTelaCadastro.Text = "Tela Login";
@@ -128,6 +128,7 @@
             txtSenha.Name = "txtSenha";
             txtSenha.Size = new Size(100, 23);
             txtSenha.TabIndex = 2;
+            txtSenha.UseSystemPasswordChar = true;
             // 
             // txtUsuario
             // 
