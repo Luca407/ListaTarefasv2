@@ -1,22 +1,21 @@
-create database teste;
+CREATE DATABASE IF NOT EXISTS teste;
 
-use teste;
+USE teste;
 
-create table if not exists Usuario
-(
-	Id_usuario int auto_increment not null primary key,
-    Nome varchar (100) not null,
-    Usuario varchar (50) not null UNIQUE,
-    Senha varchar (50) not null
+CREATE TABLE IF NOT EXISTS Usuario (
+    Id_usuario INT PRIMARY KEY AUTO_INCREMENT,
+    Nome VARCHAR(100) NOT NULL,
+    Usuario VARCHAR(50) UNIQUE NOT NULL, 
+    Senha VARCHAR(64) NOT NULL         
 );
 
-create table if not exists Tarefas
-(
-	Id_tarefa int auto_increment not null primary key,
-    Nome varchar (100) not null,
-    Descricao text not null,
-    Situacao varchar (50) not null,
-    DataCriacao datetime not null
+CREATE TABLE IF NOT EXISTS Tarefa (
+    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Nome VARCHAR(255) NOT NULL,
+    Descricao TEXT,
+    Situacao VARCHAR(50) DEFAULT 'Pendente',
+    DataCriacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    Id_usuario INT NOT NULL, 
+    FOREIGN KEY (Id_usuario) REFERENCES Usuario(Id_usuario)
+    ON DELETE CASCADE ON UPDATE CASCADE 
 );
-
-
